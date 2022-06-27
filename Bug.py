@@ -1,3 +1,5 @@
+import Animations
+
 import tkinter as tk
 import time
 import random
@@ -9,16 +11,23 @@ class Bug():
                 self.window = tk.Tk()
 # ------------- RESOURCES -----
         # ----- animation
-                self.walkingUp    = [tk.PhotoImage(file='resources/walkingUp.gif', format = 'gif -index %i' % (i)) for i in range(2)]
-                self.walkingDown  = [tk.PhotoImage(file='resources/walkingDown.gif', format = 'gif -index %i' % (i)) for i in range(2)]
-                self.walkingLeft  = [tk.PhotoImage(file='resources/walkingLeft.gif', format = 'gif -index %i' % (i)) for i in range(2)]
-                self.walkingRight = [tk.PhotoImage(file='resources/walkingRight.gif', format = 'gif -index %i' % (i)) for i in range(2)]
-                self.coffeeBreak  = [tk.PhotoImage(file='resources/coffeeBreak.gif', format = 'gif -index %i' % (i)) for i in range(2)]     
+                self.walkingUp    = [tk.PhotoImage(file = 'resources/walkingUp.gif', format = 'gif -index %i' % (i)) for i in range(2)]
+                self.walkingDown  = [tk.PhotoImage(file = 'resources/walkingDown.gif', format = 'gif -index %i' % (i)) for i in range(2)]
+                self.walkingLeft  = [tk.PhotoImage(file = 'resources/walkingLeft.gif', format = 'gif -index %i' % (i)) for i in range(2)]
+                self.walkingRight = [tk.PhotoImage(file = 'resources/walkingRight.gif', format = 'gif -index %i' % (i)) for i in range(2)]
+                self.coffeeBreak  = [tk.PhotoImage(file = 'resources/coffeeBreak.gif', format = 'gif -index %i' % (i)) for i in range(2)]     
 # ------------- INIT CONFIG -----
         # ----- animation
                 self.frameIndex    = 0
-                self.animationType = self.walkingRight
-                self.image         = self.animationType[self.frameIndex]
+                self.animationType = {
+                        "walkingUp"    : self.walkingUp,
+                        "walkingDown"  : self.walkingDown,
+                        "walkingLeft"  : self.walkingLeft,
+                        "walkingRight" : self.walkingRight,
+                        "coffeeBreak"  : self.coffeeBreak
+                }
+                self.nextAnimation = self.animationType["walkingRight"]
+                self.image         = self.nextAnimation[self.frameIndex]
         # ----- time
                 self.frameTime      = 0.05
                 self.randomTime     = 2
@@ -28,7 +37,7 @@ class Bug():
                 self.x = 0
                 self.y = 0
                 self.vector         = [1, 0]
-                self.previousVector = [0, 0]
+                self.previousVector = [2, 0]
         # ----- mode
                 self.isRandom = True
                 self.isChasingMouse = False
@@ -71,32 +80,20 @@ class Bug():
                         if time.time() > self.randomStopTime + self.randomTime:
                                 self.randomStopTime = time.time()
                                 self.randomTime     = random.uniform(2, 10)
-                                self.vector[0] = random.choice([-1, 0, 1])
-                                self.vector[1] = random.choice([-1, 0, 1])
+                                self.vector[0] = random.choice([-2, -1, 0, 1, 2])
+                                self.vector[1] = random.choice([-2, -1, 0, 1, 2])
         # ----- math implementation of "taking a step" 
                 self.x += self.vector[0]
                 self.y += self.vector[1]
 # ------------- ANIMATION -----
-        # ----- animation type settings     
-                self.isFirstIdentical  = (self.vector[0] == self.previousVector[0])
-                self.isSecondIdentical = (self.vector[0] == self.previousVector[0])
-                if self.isFirstIdentical == False | self.isSecondIdentical == False:
-                        self.previousVector = [self.vector[0], self.vector[1]]
-                        if self.vector == [0, -1]:
-                                self.animationType = self.walkingUp
-                        elif self.vector == [0, 1]:
-                                self.animationType = self.walkingDown
-                        elif self.vector[0] < 0:
-                                self.animationType = self.walkingLeft 
-                        elif self.vector[0] > 0:
-                                self.animationType = self.walkingRight
-                        elif self.vector == [0, 0]:
-                                self.animationType = self.coffeeBreak
+        # ----- animation type settings 
+                if self.vector[0] != self.previousVector[0] or self.vector[1] != self.previousVector[1]:
+                        self.nextAnimation = self.animationType[Animations.getNextAnimation(self.vector)]
         # ----- animation of "taking steps"
                 if time.time() > self.frameStopTime + self.frameTime:
                         self.frameStopTime = time.time()
                         self.frameIndex    = (self.frameIndex + 1) % 2
-                        self.image         = self.animationType[self.frameIndex]
+                        self.image         = self.nextAnimation[self.frameIndex]
         # ----- window action
                 self.window.geometry('128x128+{x}+{y}'.format(x = str(self.x), y = str(self.y)))
                 self.label.configure(image = self.image)
